@@ -1,0 +1,87 @@
+{
+	"composefiles": {
+		"docker-compose.common.yml": [
+			{
+				"name": "memcached",
+				"tag": "1",
+				"digest": "706d1761d9646b9f827f049a71fdab99457f90b920c1cca9fc295821b6df1753",
+				"service": "mc"
+			},
+			{
+				"name": "postgres",
+				"tag": "16",
+				"digest": "5d65b8bdb20369ea902b987aa63cfe4983130bc8cd2c25830d126636b80b608d",
+				"dockerfile": "docker/postgres/Dockerfile",
+				"service": "pg"
+			},
+			{
+				"name": "buildpack-deps",
+				"tag": "24.04-scm",
+				"digest": "f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb",
+				"dockerfile": "docker/python/Dockerfile",
+				"service": "python"
+			},
+			{
+				"name": "buildpack-deps",
+				"tag": "24.04",
+				"digest": "7247ea40812db330ae778fa1326e9b482723091cae2643fb03c03b911ea1f701",
+				"dockerfile": "docker/python/Dockerfile",
+				"service": "python"
+			},
+			{
+				"name": "ubuntu",
+				"tag": "24.04",
+				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295",
+				"dockerfile": "docker/python/Dockerfile",
+				"service": "python"
+			},
+			{
+				"name": "ubuntu",
+				"tag": "24.04",
+				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295",
+				"dockerfile": "docker/reloader/Dockerfile",
+				"service": "reloader"
+			}
+		]
+	},
+	"dockerfiles": {
+		"docker/postgres/Dockerfile": [
+			{
+				"name": "postgres",
+				"tag": "16",
+				"digest": "5d65b8bdb20369ea902b987aa63cfe4983130bc8cd2c25830d126636b80b608d"
+			}
+		],
+		"docker/python/Dockerfile": [
+			{
+				"name": "buildpack-deps",
+				"tag": "24.04-scm",
+				"digest": "f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb"
+			},
+			{
+				"name": "buildpack-deps",
+				"tag": "24.04",
+				"digest": "7247ea40812db330ae778fa1326e9b482723091cae2643fb03c03b911ea1f701"
+			},
+			{
+				"name": "ubuntu",
+				"tag": "24.04",
+				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295"
+			}
+		],
+		"docker/reloader/Dockerfile": [
+			{
+				"name": "ubuntu",
+				"tag": "24.04",
+				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295"
+			}
+		],
+		"docker/requirements/Dockerfile": [
+			{
+				"name": "buildpack-deps",
+				"tag": "24.04-scm",
+				"digest": "f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb"
+			}
+		]
+	}
+}

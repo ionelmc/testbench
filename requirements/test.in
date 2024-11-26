@@ -1,0 +1,15 @@
+-r base.txt
+
+
+pytest
+pytest-django
+pytest-cov
+
+# optionals
+django-webtest
+pytest-deadfixtures
+pytest-leaks
+pytest-recording
+respx
+time-machine
+pygments

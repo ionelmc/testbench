@@ -1,0 +1,58 @@
+# generated 2024-11-12, Mozilla Guideline v5.7, nginx 1.27.2, OpenSSL 3.0.13, modern configuration
+# https://ssl-config.mozilla.org/#server=nginx&version=1.27.2&config=modern&openssl=3.0.13&guideline=5.7
+
+server {
+    access_log /shared/$SERVER_NAME/logs/access.log custom;
+    error_log /shared/$SERVER_NAME/logs/error.log warn;
+
+    listen 443 ssl;
+    http2 on;
+    server_name $SERVER_NAME;
+    server_name_in_redirect on;
+
+    ssl_certificate /shared/$SERVER_NAME/etc/fullchain.pem;
+    ssl_certificate_key /shared/$SERVER_NAME/etc/privkey.pem;
+
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:MozSSL:10m;  # about 40000 sessions
+
+    # modern configuration
+    ssl_protocols TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    # HSTS (ngx_http_headers_module is required) (63072000 seconds)
+    add_header Strict-Transport-Security "max-age=63072000" always;
+
+    # OCSP stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+
+    # verify chain of trust of OCSP response using Root CA and Intermediate certs
+    ssl_trusted_certificate /shared/$SERVER_NAME/etc/chain.pem;
+
+    # replace with the IP address of your resolver
+    resolver 127.0.0.11;  # hardcoded docker resolver, sorry
+
+    location /.well-known/acme-challenge {
+        root /shared/$SERVER_NAME;
+    }
+    location /favicon.ico {
+        root /shared/$SERVER_NAME/static;
+    }
+    location /uwsgi {
+        include /etc/nginx/uwsgi_params;
+        uwsgi_pass unix:/shared/$SERVER_NAME/run/uwsgi.sock;
+        uwsgi_ignore_client_abort on;
+        uwsgi_next_upstream off;
+        uwsgi_read_timeout 300;
+        # Prevent nginx discarding large responses.
+        uwsgi_buffering on;
+        # Initial response size (practically headers size)
+        uwsgi_buffer_size 64k;
+        uwsgi_buffers 8 32k;
+    }
+    location /granian {
+        proxy_pass http://granian:8000;
+    }
+
+}

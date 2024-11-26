@@ -1,0 +1,96 @@
+services:
+  requirements:
+    build:
+      context: docker/requirements
+    volumes:
+      - ./requirements:/requirements
+      - ./.home/requirements:/home/app
+
+  test:
+    extends:
+      service: python
+      file: docker-compose.common.yml
+    build:
+      args:
+        REQUIREMENTS: test
+        DJANGO_SETTINGS_MODULE: 'testbench_project.settings_test'
+        PYTHONPATH: /app/src:/app/tests
+    entrypoint: /app/tests/entrypoint.sh
+    environment:
+      DJANGO_DEBUG:
+      DJANGO_DEBUG_SQL:
+      DJANGO_DEBUG_SQL_LIMIT:
+      PYTHONHUNTER:
+      PYTHONHUNTERCONFIG:
+      SERVER_NAME: localhost
+      DJANGO_SECRET_KEY: test123
+      SENTRY_DSN: ''
+    stop_signal: SIGINT
+    depends_on:
+      - nginx
+    volumes:
+      - ./:/app
+      - ./.home:/var/app
+
+  uwsgi:
+    extends:
+      service: python
+      file: docker-compose.common.yml
+    env_file:
+      - .env
+    volumes:
+      - ./.home/run:/var/app/run
+    stop_signal: SIGTERM
+    command: [
+      'uwsgi',
+      '--ini', '/etc/app/uwsgi.ini',
+      '--processes', '4',
+    ]
+
+  granian:
+    extends:
+      service: python
+      file: docker-compose.common.yml
+    env_file:
+      - .env
+    stop_signal: SIGTERM
+    command: [
+      'granian',
+      '--host', '0.0.0.0',
+      '--interface', 'wsgi',
+      '--log-level', 'info',
+      '--backlog', '2048',
+      '--http', '1',
+      '--workers', '10',
+      'testbench_project.wsgi:application',
+    ]
+    ports:
+      - '8000:8000'
+
+  nginx:
+    extends:
+      service: python
+      file: docker-compose.common.yml
+    build:
+      args:
+        REQUIREMENTS: nginx
+    env_file:
+      - .env
+    volumes:
+      - ./.home/etc:/shared/${SERVER_NAME}/etc
+      - ./.home/run:/shared/${SERVER_NAME}/run
+      - ./.home/etc:/etc/app
+    depends_on:
+      - uwsgi
+      - granian
+    ports:
+      - '80:80'
+      - '443:443'
+    command: [
+      'holdup',
+      '--verbose',
+      'unix:///shared/${SERVER_NAME}/run/uwsgi.sock',
+      'http://granian:8000',
+      '--',
+      'nginx',
+    ]

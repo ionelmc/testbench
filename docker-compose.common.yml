@@ -1,0 +1,39 @@
+# This file contains mostly build definitions. Ports, env files and dependencies have no place because this file would be used for release
+# or test configurations.
+# Volumes shouldn't either, but we're making a compromise for DRY-ness.
+services:
+  python:
+    build:
+      context: docker/python
+      additional_contexts:
+        requirements-context: requirements
+        src-context: src
+      args:
+        DJANGO_COLLECTSTATIC:
+        DJANGO_SETTINGS_MODULE:
+        REQUIREMENTS: base
+        SERVER_NAME:
+    environment:
+      PYTHONHUNTER:
+      PYTHONHUNTERCONFIG:
+      DJANGO_DEBUG:
+      DJANGO_DEBUG_SQL:
+      DJANGO_DEBUG_SQL_LIMIT:
+      DJANGO_DEBUG_TOOLBAR:
+      LOGGING_LEVEL:
+      LOGGING_PATH:
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT:-4G}
+    ulimits:
+      nproc: 16384
+      nofile:
+        soft: 65536
+        hard: 262144
+    volumes:
+      - .:/app
+      - ./.home:/root
+      - ./.home:/home/app
+      - ./.home:/var/app
+    init: true
