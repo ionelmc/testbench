@@ -77,9 +77,10 @@ services:
       --log-level=info,
       --loop=uvloop,
       --no-ws,
-      --runtime-blocking-threads=10,
       --uds=/var/app/run/granian.sock,
-      --workers=10,
+      --workers=1,
+      --runtime-mode=mt,
+      --runtime-threads=10,
       testbench_project.asgi:application,
     ]
 
