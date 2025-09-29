@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.9
-FROM buildpack-deps:24.04-scm@sha256:f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb as deps
+FROM python:3.13-bookworm@sha256:f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb as deps
 
 # DEBIAN_FRONTEND=noninteractive exists to prevent tzdata going nuts.
 # Maybe dpkg incorrectly detects interactive on buildkit containers?
@@ -7,23 +7,21 @@ RUN <<EOF bash
     set -euxo pipefail
     export DEBIAN_FRONTEND=noninteractive
 
-    echo "deb http://apt.postgresql.org/pub/repos/apt noble-pgdg main 16" > /etc/apt/sources.list.d/pgdg.list
+    echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main 17" > /etc/apt/sources.list.d/pgdg.list
     curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
     apt-get update
     apt-get install -y --no-install-recommends \
-        python3-dev \
-        python-is-python3 \
-        libpq-dev=16.* libpq5=16.* \
+        libpq-dev=17.* libpq5=17.* \
         libgdal-dev \
         libtiff-dev libjpeg-dev libzip-dev libfreetype-dev \
         libwebp-dev tcl-dev tk-dev libffi-dev \
-        libmemcached-dev zlib1g-dev libpcre3-dev \
+        zlib1g-dev libpcre3-dev \
         build-essential git sudo ca-certificates
 EOF
 RUN <<EOF bash
     set -euxo pipefail
     curl -fsSL 'https://bootstrap.pypa.io/get-pip.py' | python - --no-cache --disable-pip-version-check --upgrade --break-system-packages \
-    pip==24.3.1 setuptools==75.6.0
+    pip==25.2 setuptools==80.9.0
 EOF
 
 # This intents to be the sole Dockerfile for the project so allow building variants with different or no dependencies.
@@ -75,17 +73,19 @@ EOF
 
 ##################################
 ##################################
-FROM buildpack-deps:24.04@sha256:7247ea40812db330ae778fa1326e9b482723091cae2643fb03c03b911ea1f701 as certs
+FROM python:3.13-bookworm@sha256:f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb as certs
 ##################################
 ARG SERVER_NAME="localhost"
+
+# We are using the certbot naming convertion for these files.
 RUN mkdir /certs \
  && openssl req -x509 -nodes -newkey rsa:4096 -sha256 \
-                -out /certs/fullchain.pem -keyout /certs/privkey.pem \
+                -out /certs/cert.pem -keyout /certs/privkey.pem \
                 -subj "/CN=$SERVER_NAME"
 
 #################
 #################
-FROM ubuntu:24.04@sha256:278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295
+FROM python:3.13-slim-bookworm@sha256:5fa2567616c8d0e9a9470c8b4c1cb8b6f4d9f2fd45a548df393bed3537a7a324
 #################
 RUN test -e /etc/apt/apt.conf.d/docker-clean # sanity check
 
@@ -96,8 +96,8 @@ RUN <<EOF bash
     apt-get update
     apt-get install -y --no-install-recommends \
         curl software-properties-common gpg-agent
-    echo "deb http://apt.postgresql.org/pub/repos/apt noble-pgdg main 16" > /etc/apt/sources.list.d/pgdg.list
-    echo "deb http://nginx.org/packages/mainline/ubuntu/ noble nginx" > /etc/apt/sources.list.d/nginx.list
+    echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main 17" > /etc/apt/sources.list.d/pgdg.list
+    echo "deb http://nginx.org/packages/mainline/debian/ bookworm nginx" > /etc/apt/sources.list.d/nginx.list
     curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
     curl http://nginx.org/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx.org.gpg
     apt-get update
@@ -107,11 +107,8 @@ RUN <<EOF bash
         rsync moreutils \
         graphviz \
         dumb-init \
-        libpq5=16.* postgresql-client-16 \
-        python3-dbg \
-        python3-gdal gdal-bin \
-        python-is-python3 \
-        libmemcached11 libpcre3 \
+        libpq5=17.* postgresql-client-17 \
+        libpcre3 \
         sudo ca-certificates \
         nginx \
         gettext \
@@ -131,8 +128,7 @@ RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
  && dpkg-reconfigure -f noninteractive tzdata
 RUN <<EOF bash
     set -euxo pipefail
-    curl -fsSL 'https://bootstrap.pypa.io/get-pip.py' | python - --no-cache --disable-pip-version-check --upgrade --break-system-packages \
-        uv==0.5.4
+    curl -fsSL https://github.com/astral-sh/uv/releases/download/0.8.20/uv-installer.sh | XDG_BIN_HOME=/usr/local/bin sh
 EOF
 
 RUN --mount=type=bind,from=deps,src=/deps,target=/deps <<EOF bash
@@ -157,8 +153,6 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 RUN <<EOF bash
     set -eux
-    # clear leftover user that the 24.04 image has
-    userdel ubuntu || true
     groupadd --gid $GROUP_ID app
     useradd --uid $USER_ID --gid $GROUP_ID --shell /bin/bash --create-home app
     echo "app ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -206,7 +200,8 @@ RUN <<EOF bash
     set -euxo pipefail
     envsubst '\$SERVER_NAME' < /etc/app-latest/nginx.site | sponge /etc/app-latest/nginx.site
 EOF
-RUN cp /etc/app-defaults/fullchain.pem /etc/app-defaults/chain.pem \
+RUN ln -s cert.pem /etc/app-defaults/chain.pem \
+ && ln -s cert.pem /etc/app-defaults/fullchain.pem \
  && ln -sf /etc/app/nginx.conf /etc/nginx/nginx.conf \
  && cp /etc/nginx/mime.types /etc/app-latest \
  && chmod -R go+r /etc/app

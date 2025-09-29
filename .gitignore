@@ -24,5 +24,12 @@ node_modules
 # osx
 .DS_Store
 
+# local docker-compose settings
+.env
+
+# deployment settings
+.env-production
+deploy/*/.env*
+
 # logs
 *.log

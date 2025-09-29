@@ -3,6 +3,7 @@
 default_context:
     analytics_gtag: G-
     compose_project_name: tstb
+    debian_release: latest
     deploy_ansible_host: 1.2.3.4
     deploy_ansible_port: '22'
     deploy_cron: false
@@ -33,8 +34,5 @@ default_context:
     setuptools_version: latest
     short_description: An example project. Generated with ionelmc/cookiecutter-django-docker.
     timezone: Europe/Bucharest
-    ubuntu_release: latest
-    ubuntu_version: latest
-    uv_enabled: true
     uv_version: latest
     worker: none

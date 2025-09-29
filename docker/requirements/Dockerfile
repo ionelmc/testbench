@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.9
-FROM buildpack-deps:24.04-scm@sha256:f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb as deps
+FROM python:3.13-bookworm@sha256:f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb
 
 ARG TZ=UTC
 
@@ -9,24 +9,21 @@ RUN <<EOF bash
     set -euxo pipefail
     export DEBIAN_FRONTEND=noninteractive
 
-    echo "deb http://apt.postgresql.org/pub/repos/apt noble-pgdg main 16" > /etc/apt/sources.list.d/pgdg.list
+    echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main 17" > /etc/apt/sources.list.d/pgdg.list
     curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
     apt-get update
     apt-get install -y --no-install-recommends \
-        python3-dev \
-        python-is-python3 \
-        libpq-dev=16.* libpq5=16.* \
+        libpq-dev=17.* libpq5=17.* \
         libgdal-dev \
         libtiff-dev libjpeg-dev libzip-dev libfreetype-dev \
         libwebp-dev tcl-dev tk-dev libffi-dev \
-        libmemcached-dev zlib1g-dev libpcre3-dev \
+        zlib1g-dev libpcre3-dev \
         build-essential git sudo ca-certificates
 EOF
 
 RUN <<EOF bash
     set -euxo pipefail
-    curl -fsSL 'https://bootstrap.pypa.io/get-pip.py' | python - --no-cache --disable-pip-version-check --upgrade --break-system-packages \
-    uv==0.5.4
+    curl -fsSL https://github.com/astral-sh/uv/releases/download/0.8.20/uv-installer.sh | XDG_BIN_HOME=/usr/local/bin sh
 EOF
 
 ENV CPUCOUNT=1
@@ -34,8 +31,6 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 RUN <<EOF bash
     set -eux
-    # clear leftover user that the 24.04 image has
-    userdel ubuntu || true
     groupadd --gid $GROUP_ID app
     useradd --uid $USER_ID --gid $GROUP_ID --shell /bin/bash --create-home app
     echo "app ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers

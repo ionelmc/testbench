@@ -2,85 +2,51 @@
 	"composefiles": {
 		"docker-compose.common.yml": [
 			{
-				"name": "memcached",
-				"tag": "1",
-				"digest": "706d1761d9646b9f827f049a71fdab99457f90b920c1cca9fc295821b6df1753",
-				"service": "mc"
-			},
-			{
-				"name": "postgres",
-				"tag": "16",
-				"digest": "5d65b8bdb20369ea902b987aa63cfe4983130bc8cd2c25830d126636b80b608d",
-				"dockerfile": "docker/postgres/Dockerfile",
-				"service": "pg"
-			},
-			{
-				"name": "buildpack-deps",
-				"tag": "24.04-scm",
-				"digest": "f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb",
+				"name": "python",
+				"tag": "3.13-bookworm",
+				"digest": "f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb",
 				"dockerfile": "docker/python/Dockerfile",
 				"service": "python"
 			},
 			{
-				"name": "buildpack-deps",
-				"tag": "24.04",
-				"digest": "7247ea40812db330ae778fa1326e9b482723091cae2643fb03c03b911ea1f701",
+				"name": "python",
+				"tag": "3.13-bookworm",
+				"digest": "f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb",
 				"dockerfile": "docker/python/Dockerfile",
 				"service": "python"
 			},
 			{
-				"name": "ubuntu",
-				"tag": "24.04",
-				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295",
+				"name": "python",
+				"tag": "3.13-slim-bookworm",
+				"digest": "5fa2567616c8d0e9a9470c8b4c1cb8b6f4d9f2fd45a548df393bed3537a7a324",
 				"dockerfile": "docker/python/Dockerfile",
 				"service": "python"
-			},
-			{
-				"name": "ubuntu",
-				"tag": "24.04",
-				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295",
-				"dockerfile": "docker/reloader/Dockerfile",
-				"service": "reloader"
 			}
 		]
 	},
 	"dockerfiles": {
-		"docker/postgres/Dockerfile": [
-			{
-				"name": "postgres",
-				"tag": "16",
-				"digest": "5d65b8bdb20369ea902b987aa63cfe4983130bc8cd2c25830d126636b80b608d"
-			}
-		],
 		"docker/python/Dockerfile": [
 			{
-				"name": "buildpack-deps",
-				"tag": "24.04-scm",
-				"digest": "f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb"
+				"name": "python",
+				"tag": "3.13-bookworm",
+				"digest": "f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb"
 			},
 			{
-				"name": "buildpack-deps",
-				"tag": "24.04",
-				"digest": "7247ea40812db330ae778fa1326e9b482723091cae2643fb03c03b911ea1f701"
+				"name": "python",
+				"tag": "3.13-bookworm",
+				"digest": "f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb"
 			},
 			{
-				"name": "ubuntu",
-				"tag": "24.04",
-				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295"
-			}
-		],
-		"docker/reloader/Dockerfile": [
-			{
-				"name": "ubuntu",
-				"tag": "24.04",
-				"digest": "278628f08d4979fb9af9ead44277dbc9c92c2465922310916ad0c46ec9999295"
+				"name": "python",
+				"tag": "3.13-slim-bookworm",
+				"digest": "5fa2567616c8d0e9a9470c8b4c1cb8b6f4d9f2fd45a548df393bed3537a7a324"
 			}
 		],
 		"docker/requirements/Dockerfile": [
 			{
-				"name": "buildpack-deps",
-				"tag": "24.04-scm",
-				"digest": "f2a9b11fa6b85715c9667d5acb1261049a3681b97e4d13cbb06ba9c2696664eb"
+				"name": "python",
+				"tag": "3.13-bookworm",
+				"digest": "f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb"
 			}
 		]
 	}
