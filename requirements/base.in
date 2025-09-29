@@ -1,5 +1,6 @@
 uwsgi
-granian
+granian[uvloop]
+uvicorn[standard]
 
 # container tooling
 holdup

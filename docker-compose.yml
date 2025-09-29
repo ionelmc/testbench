@@ -6,7 +6,7 @@ services:
       - ./requirements:/requirements
       - ./.home/requirements:/home/app
     env_file:
-      - .env-test
+      - .env
 
   test:
     extends:
@@ -17,8 +17,6 @@ services:
         REQUIREMENTS: test
         DJANGO_SETTINGS_MODULE: 'testbench_project.settings_test'
     entrypoint: /app/tests/entrypoint.sh
-    env_file:
-      - .env-test
     environment:
       PYTHONPATH: /app/src:/app/tests
       DJANGO_DEBUG:
@@ -44,32 +42,46 @@ services:
       - .env
     volumes:
       - ./.home/run:/var/app/run
-    stop_signal: SIGTERM
     command: [
-      'uwsgi',
-      '--ini', '/etc/app/uwsgi.ini',
-      '--processes', '4',
+      uwsgi,
+      --disable-logging,
+      --ini=/etc/app/uwsgi.ini,
+      --processes=10,
+    ]
+
+  uvicorn:
+    extends:
+      service: python
+      file: docker-compose.common.yml
+    command: [
+      pysu, app, --,
+      uvicorn,
+      --http=httptools,
+      --loop=uvloop,
+      --uds=/var/app/run/uvicorn.sock,
+      --workers=10,
+      --ws=none,
+      testbench_project.asgi:application,
     ]
 
   granian:
     extends:
       service: python
       file: docker-compose.common.yml
-    env_file:
-      - .env
-    stop_signal: SIGTERM
     command: [
-      'granian',
-      '--host', '0.0.0.0',
-      '--interface', 'wsgi',
-      '--log-level', 'info',
-      '--backlog', '2048',
-      '--http', '1',
-      '--workers', '10',
-      'testbench_project.wsgi:application',
+      granian,
+      --backlog=2048,
+      --backpressure=1024,
+      --http=1,
+      --interface=asgi,
+      --log-level=info,
+      --loop=uvloop,
+      --no-ws,
+      --runtime-blocking-threads=10,
+      --uds=/var/app/run/granian.sock,
+      --workers=10,
+      testbench_project.asgi:application,
     ]
-    ports:
-      - '8000:8000'
 
   nginx:
     extends:
@@ -78,8 +90,6 @@ services:
     build:
       args:
         REQUIREMENTS: nginx
-    env_file:
-      - .env
     volumes:
       - ./.home/etc:/shared/${SERVER_NAME}/etc
       - ./.home/run:/shared/${SERVER_NAME}/run
@@ -87,14 +97,16 @@ services:
     depends_on:
       - uwsgi
       - granian
+      - uvicorn
     ports:
       - '80:80'
       - '443:443'
     command: [
-      'holdup',
-      '--verbose',
-      'unix:///shared/${SERVER_NAME}/run/uwsgi.sock',
-      'http://granian:8000',
-      '--',
-      'nginx',
+      holdup,
+      -vt5,
+      'unix:///var/app/run/uwsgi.sock',
+      'unix:///var/app/run/granian.sock',
+      'unix:///var/app/run/uvicorn.sock',
+      --,
+      nginx,
     ]

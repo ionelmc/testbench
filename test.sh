@@ -39,9 +39,6 @@ Examples:
     exit 0
 fi
 
-export COMPOSE_PROJECT_NAME="testtstb"
-export COMPOSE_FILE=docker-compose.test.yml
-
 USER="${USER:-$(id -nu)}"
 if [[ "$(uname)" == "Darwin" ]]; then
     USER_ID=1000
@@ -88,7 +85,7 @@ fi
 set -x
 
 if [[ -z "$*" ]]; then
-    set -- pytest
+    set -- --http2 -c 1 -d 10s
 fi
 
 homedir=$(dirname ${BASH_SOURCE[0]})/.home

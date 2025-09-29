@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.9
-FROM python:3.13-bookworm@sha256:f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb as deps
+FROM python:3.13-bookworm@sha256:f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb AS deps
 
 # DEBIAN_FRONTEND=noninteractive exists to prevent tzdata going nuts.
 # Maybe dpkg incorrectly detects interactive on buildkit containers?
@@ -73,7 +73,7 @@ EOF
 
 ##################################
 ##################################
-FROM python:3.13-bookworm@sha256:f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb as certs
+FROM python:3.13-bookworm@sha256:f64a1db27d5d0fdcb48a54c553e67b0ec920c8a1ef0b627e87b8d3d73dc003fb AS certs
 ##################################
 ARG SERVER_NAME="localhost"
 
@@ -190,7 +190,7 @@ WORKDIR /app
 COPY --link entrypoint.sh /
 COPY --link uwsgi.ini /etc/app-latest/
 COPY --link nginx.conf /etc/app-latest/
-COPY --link nginx.site /etc/app-latest/
+COPY --link nginx.site.conf /etc/app-latest/
 COPY --link yacron.yml /etc/app-latest/
 COPY --link --from=certs --chmod=0644 /certs/* /etc/app-defaults/
 COPY --link --from=deps --chmod=0755 /rewrk/target/release/rewrk /usr/local/bin/
@@ -198,7 +198,7 @@ COPY --link --from=deps --chmod=0755 /rewrk/target/release/rewrk /usr/local/bin/
 ARG SERVER_NAME="localhost"
 RUN <<EOF bash
     set -euxo pipefail
-    envsubst '\$SERVER_NAME' < /etc/app-latest/nginx.site | sponge /etc/app-latest/nginx.site
+    envsubst '\$SERVER_NAME' < /etc/app-latest/nginx.site.conf | sponge /etc/app-latest/nginx.site.conf
 EOF
 RUN ln -s cert.pem /etc/app-defaults/chain.pem \
  && ln -s cert.pem /etc/app-defaults/fullchain.pem \
