@@ -21,3 +21,4 @@ rewrk "$@" -h https://nginx/granian-asgi
 rewrk "$@" -h https://nginx/granian-wsgi
 rewrk "$@" -h https://nginx/uwsgi
 rewrk "$@" -h https://nginx/local
+rewrk "$@" -h https://granian

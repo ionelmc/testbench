@@ -104,6 +104,31 @@ services:
       testbench_project.wsgi:application,
     ]
 
+  granian:
+    extends:
+      service: python
+      file: docker-compose.common.yml
+    command: [
+      granian,
+      --backlog=2048,
+      --backpressure=1024,
+      --http=2,
+      --ssl-certificate=/etc/app/fullchain.pem,
+      --ssl-keyfile=/etc/app/privkey.pem,
+      --interface=wsgi,
+      --log-level=info,
+      --no-ws,
+      --host=0.0.0.0,
+      --port=443,
+      --workers=10,
+      --runtime-mode=st,
+      --runtime-threads=10,
+      --blocking-threads=1,
+      testbench_project.wsgi:application,
+    ]
+#    ports:
+#      - '443:443'
+
   nginx:
     extends:
       service: python
@@ -120,9 +145,9 @@ services:
       - granian-asgi
       - granian-wsgi
       - uvicorn
-    ports:
-      - '80:80'
-      - '443:443'
+#    ports:
+#      - '80:80'
+#      - '443:443'
     command: [
       holdup,
       -vt5,
