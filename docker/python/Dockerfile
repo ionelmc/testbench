@@ -7,11 +7,8 @@ RUN <<EOF bash
     set -euxo pipefail
     export DEBIAN_FRONTEND=noninteractive
 
-    echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main 17" > /etc/apt/sources.list.d/pgdg.list
-    curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
     apt-get update
     apt-get install -y --no-install-recommends \
-        libpq-dev=17.* libpq5=17.* \
         libgdal-dev \
         libtiff-dev libjpeg-dev libzip-dev libfreetype-dev \
         libwebp-dev tcl-dev tk-dev libffi-dev \
@@ -40,33 +37,32 @@ RUN --mount=type=cache,target=/root/.cache <<EOF bash
     fi
 EOF
 
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.82.0
+##################################
+##################################
+FROM buildpack-deps:bookworm AS rewrk
+##################################
+RUN <<EOF bash
+    set -euxo pipefail
+    export DEBIAN_FRONTEND=noninteractive
 
-RUN set -eux; \
-    dpkgArch="$(dpkg --print-architecture)"; \
-    case "${dpkgArch##*-}" in \
-        amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='6aeece6993e902708983b209d04c0d1dbb14ebb405ddb87def578d41f920f56d' ;; \
-        armhf) rustArch='armv7-unknown-linux-gnueabihf'; rustupSha256='3c4114923305f1cd3b96ce3454e9e549ad4aa7c07c03aec73d1a785e98388bed' ;; \
-        arm64) rustArch='aarch64-unknown-linux-gnu'; rustupSha256='1cffbf51e63e634c746f741de50649bbbcbd9dbe1de363c9ecef64e278dba2b2' ;; \
-        i386) rustArch='i686-unknown-linux-gnu'; rustupSha256='0a6bed6e9f21192a51f83977716466895706059afb880500ff1d0e751ada5237' ;; \
-        *) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;; \
-    esac; \
-    url="https://static.rust-lang.org/rustup/archive/1.27.1/${rustArch}/rustup-init"; \
-    wget "$url"; \
-    echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
-    chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
-    rm rustup-init; \
-    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
-    rustup --version; \
-    cargo --version; \
-    rustc --version;
+    apt-get update
+    apt-get install -y --no-install-recommends \
+      curl
+EOF
+
+ENV PATH=$PATH:/root/.cargo/bin
 
 RUN <<EOF bash
-    git clone https://github.com/gi0baro/rewrk.git /rewrk
+    set -euxo pipefail
+
+    curl -fsSL https://sh.rustup.rs | sh -s -- -y
+    rustup --version
+    cargo --version
+    rustc --version
+EOF
+
+RUN <<EOF bash
+    git clone https://github.com/lnx-search/rewrk.git /rewrk
     cd /rewrk
     cargo build --release
 EOF
@@ -96,9 +92,7 @@ RUN <<EOF bash
     apt-get update
     apt-get install -y --no-install-recommends \
         curl software-properties-common gpg-agent
-    echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main 17" > /etc/apt/sources.list.d/pgdg.list
     echo "deb http://nginx.org/packages/mainline/debian/ bookworm nginx" > /etc/apt/sources.list.d/nginx.list
-    curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
     curl http://nginx.org/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx.org.gpg
     apt-get update
     apt-get install -y --no-install-recommends \
@@ -107,12 +101,10 @@ RUN <<EOF bash
         rsync moreutils \
         graphviz \
         dumb-init \
-        libpq5=17.* postgresql-client-17 \
         libpcre3 \
         sudo ca-certificates \
         nginx \
         gettext \
-        wrk \
         tzdata
 EOF
 
@@ -193,7 +185,7 @@ COPY --link nginx.conf /etc/app-latest/
 COPY --link nginx.site.conf /etc/app-latest/
 COPY --link yacron.yml /etc/app-latest/
 COPY --link --from=certs --chmod=0644 /certs/* /etc/app-defaults/
-COPY --link --from=deps --chmod=0755 /rewrk/target/release/rewrk /usr/local/bin/
+COPY --link --from=rewrk --chmod=0755 /rewrk/target/release/rewrk /usr/local/bin/
 
 ARG SERVER_NAME="localhost"
 RUN <<EOF bash
