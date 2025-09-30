@@ -15,7 +15,8 @@ holdup -v -t10 --insecure \
     https://nginx/uvicorn \
     https://nginx/uwsgi \
     https://nginx/granian-asgi \
-    https://nginx/granian-wsgi
+    https://nginx/granian-wsgi \
+    tcp://granian:443
 rewrk "$@" -h https://nginx/uvicorn
 rewrk "$@" -h https://nginx/granian-asgi
 rewrk "$@" -h https://nginx/granian-wsgi
