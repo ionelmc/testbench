@@ -8,21 +8,13 @@ Usage: ./test.sh command-to-run arguments
 
 Examples:
 
-- run the default (pytest):
+- run the default (rewrk):
 
     ./test.sh
 
-- run pytest with arguments:
+- run rewrk with different options:
 
-    ./test.sh pytest -k mytest
-
-- make migrations:
-
-    ./test.sh django-admin makemigrations
-
-- do interactive stuff:
-
-    ./test.sh bash
+    ./test.sh --http2 -c 10 -d 60s
 
 - update the requirements (also automatically run if you don't have any requirements/*.txt):
 
@@ -32,7 +24,7 @@ Examples:
 
     NOBUILD=1 ./test.sh
 
-- disable service teardown (faster but less safe runs):
+- disable service teardown:
 
     NOCLEAN=1 ./test.sh
 "
@@ -101,11 +93,11 @@ function cleanup() {
     docker compose down && docker compose rm -fv
 }
 if [[ -n "${NODEPS:-}" ]]; then
-    exec docker compose run -e NODEPS=yes --no-deps --rm --user=$USER_ID test "$@"
+    exec docker compose run -e NODEPS=yes --no-deps --rm test "$@"
 else
     if [[ -z "${NOCLEAN:-}" ]]; then
         trap cleanup EXIT
         cleanup || echo "Already clean :-)"
     fi
-    docker compose run --rm --user=$USER_ID test "$@"
+    docker compose run --rm test "$@"
 fi

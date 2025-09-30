@@ -1,13 +1,3 @@
-from pathlib import Path
-
-sock = Path("/var/app/run/granian.sock")
-if sock.exists():
-    try:
-        sock.chmod(0o666)
-    except PermissionError:
-        pass
-
-
 async def application(scope, receive, send):
     if scope["type"] == "lifespan":
         while True:

@@ -64,7 +64,7 @@ services:
       testbench_project.asgi:application,
     ]
 
-  granian:
+  granian-asgi:
     extends:
       service: python
       file: docker-compose.common.yml
@@ -77,11 +77,30 @@ services:
       --log-level=info,
       --loop=uvloop,
       --no-ws,
-      --uds=/var/app/run/granian.sock,
+      --uds=/var/app/run/granian-asgi.sock,
       --workers=1,
       --runtime-mode=mt,
       --runtime-threads=10,
       testbench_project.asgi:application,
+    ]
+
+  granian-wsgi:
+    extends:
+      service: python
+      file: docker-compose.common.yml
+    command: [
+      granian,
+      --backlog=2048,
+      --backpressure=1024,
+      --http=1,
+      --interface=wsgi,
+      --log-level=info,
+      --no-ws,
+      --uds=/var/app/run/granian-wsgi.sock,
+      --workers=1,
+      --runtime-mode=mt,
+      --runtime-threads=10,
+      testbench_project.wsgi:application,
     ]
 
   nginx:
@@ -97,7 +116,8 @@ services:
       - ./.home/etc:/etc/app
     depends_on:
       - uwsgi
-      - granian
+      - granian-asgi
+      - granian-wsgi
       - uvicorn
     ports:
       - '80:80'
@@ -106,7 +126,8 @@ services:
       holdup,
       -vt5,
       'unix:///var/app/run/uwsgi.sock',
-      'unix:///var/app/run/granian.sock',
+      'unix:///var/app/run/granian-asgi.sock',
+      'unix:///var/app/run/granian-wsgi.sock',
       'unix:///var/app/run/uvicorn.sock',
       --,
       nginx,
