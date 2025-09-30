@@ -100,6 +100,7 @@ services:
       --workers=1,
       --runtime-mode=mt,
       --runtime-threads=10,
+      --blocking-threads=10,
       testbench_project.wsgi:application,
     ]
 
