@@ -17,6 +17,7 @@ async def application(scope, receive, send):
         await send(
             {
                 "type": "http.response.body",
-                "body": [b"Test"],
+                "body": b"Test",
+                "more_body": False,
             }
         )
