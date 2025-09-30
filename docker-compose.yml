@@ -30,6 +30,7 @@ services:
     stop_signal: SIGINT
     depends_on:
       - nginx
+      - granian
     volumes:
       - ./:/app
       - ./.home:/var/app
@@ -53,6 +54,7 @@ services:
     extends:
       service: python
       file: docker-compose.common.yml
+    entrypoint: []
     command: [
       pysu, app, --,
       uvicorn,
@@ -68,6 +70,7 @@ services:
     extends:
       service: python
       file: docker-compose.common.yml
+    entrypoint: []
     command: [
       granian,
       --backlog=2048,
@@ -88,6 +91,7 @@ services:
     extends:
       service: python
       file: docker-compose.common.yml
+    entrypoint: []
     command: [
       granian,
       --backlog=2048,
